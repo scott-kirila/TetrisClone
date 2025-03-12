@@ -27,6 +27,18 @@ protected:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* RootBlock;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* Block1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* Block2;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* Block3;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ATetrisPlayerController* PlayerController;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -37,6 +49,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputAction* RotateAction;
+
+	UPROPERTY(EditAnywhere)
+	float TraceDistance = 10.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanMove = true;
@@ -52,13 +67,14 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION()
-	void OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-		FVector NormalImpulse, const FHitResult& Hit);
+	// UFUNCTION()
+	// void OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	// 	FVector NormalImpulse, const FHitResult& Hit);
 
 	void LeftRight(const FInputActionValue& Value);
 	void Down();
 	void Rotate();
-
 	void OnDropTimeout();
+	
+	void CheckForStop();
 };

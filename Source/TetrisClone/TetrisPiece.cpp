@@ -11,7 +11,31 @@ ATetrisPiece::ATetrisPiece()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	RootBlock = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootBlock"));
+    SetRootComponent(RootBlock);
+
+	Block1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Block1"));
+	Block1->SetupAttachment(RootComponent);
+
+	Block2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Block2"));
+	Block2->SetupAttachment(RootComponent);
+
+	Block3 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Block3"));
+	Block3->SetupAttachment(RootComponent);
 	
+	// for (int i = 0; i < 4; i++)
+	// {
+	// 	auto Name = FString::Printf(TEXT("Block_%d"), i);
+	// 	auto Block = CreateDefaultSubobject<USceneComponent>(FName(Name));
+	//
+	// 	if (i == 0)
+	// 	{
+	// 		SetRootComponent(Block);
+	// 	} else
+	// 	{
+	// 		Block->SetupAttachment(RootComponent);
+	// 	}
+	// }
 }
 
 // Called when the game starts or when spawned
@@ -85,12 +109,6 @@ void ATetrisPiece::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	}
 }
 
-void ATetrisPiece::OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse, const FHitResult& Hit)
-{
-	bCanMove = false;
-}
-
 void ATetrisPiece::LeftRight(const FInputActionValue& Value)
 {
 	if (!bCanMove) return;
@@ -99,7 +117,7 @@ void ATetrisPiece::LeftRight(const FInputActionValue& Value)
 	float Direction = FMath::Sign(ActionValue);
 	
 	auto CurrentLocation = GetActorLocation();
-	SetActorLocation({CurrentLocation.X + Direction * 100.0f, CurrentLocation.Y, CurrentLocation.Z + 5});
+	SetActorLocation({CurrentLocation.X + Direction * 100.0f, CurrentLocation.Y, CurrentLocation.Z});
 }
 
 void ATetrisPiece::Down()
@@ -108,27 +126,71 @@ void ATetrisPiece::Down()
 
 	auto CurrentLocation = GetActorLocation();
 	SetActorLocation({CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f});
+
+	CheckForStop();
 }
 
 void ATetrisPiece::Rotate()
 {
 	if (!bCanMove) return;
-	
+
 	auto Rotation = FRotator(-90.0f, 0.0f, 0.0f);
-	
-	// auto StartQuat = GetActorRotation().Quaternion();
-	// auto EndQuat = StartQuat * Rotation.Quaternion();
-	// auto SlerpedQuat = FQuat::Slerp(StartQuat, EndQuat, 1.0f);
-	// SetActorRotation(SlerpedQuat);
-	
 	AddActorLocalRotation(Rotation);
+
+	CheckForStop();
 }
 
 void ATetrisPiece::OnDropTimeout()
 {
+	if (!bCanMove) return;
+	
 	auto CurrentLocation = GetActorLocation();
 	
 	auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f);
 	SetActorLocation(NewLocation);
+
+	CheckForStop();
 }
 
+void ATetrisPiece::CheckForStop()
+{
+	TArray<USceneComponent*> Meshes;
+	GetComponents(Meshes, true);
+	
+	for (auto& Mesh : Meshes)
+	{
+		FVector Start = Mesh->GetComponentLocation() - FVector::UpVector * 45.0f;
+		FVector End = Start - FVector::UpVector * TraceDistance;
+		FHitResult OutHit;
+		// TArray<FHitResult> OutHits;
+		DrawDebugLine(GetWorld(), Start, End, FColor::Green, true, 1, 0, 5);
+		GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_WorldStatic);
+		// GetWorld()->LineTraceMultiByChannel(OutHits, Start, End, ECC_WorldStatic);
+
+		if (OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
+		{
+			auto Name = OutHit.Component->GetReadableName();
+			GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Name);
+
+			bCanMove = false;
+			bCanRotate = false;
+			GetWorldTimerManager().ClearTimer(DropTimer);
+		}
+		
+		// auto Str = FString::Printf(TEXT("%d"), OutHits.Num());
+		//
+		// for (auto& OutHit : OutHits)
+		// {
+		// 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Str);
+		// 	if (OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
+		// 	{
+		// 		auto Name = OutHit.Component->GetReadableName();
+		// 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Name);
+		//
+		// 		bCanMove = false;
+		// 		bCanRotate = false;
+		// 		GetWorldTimerManager().ClearTimer(DropTimer);
+		// 	}
+		// }
+	}
+}
