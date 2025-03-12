@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Pawn.h"
+
+#include "InputActionValue.h"
+#include "Engine/TimerHandle.h"
 
 #include "TetrisPlayerController.h"
 
-#include "InputActionValue.h"
-
-#include "GameFramework/Pawn.h"
 #include "TetrisPiece.generated.h"
 
 UCLASS()
@@ -34,12 +35,26 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputAction* RotateAction;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanMove = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanRotate = true;
+	
+	FTimerHandle DropTimer;
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION()
+	void OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse, const FHitResult& Hit);
+
 	void Move(const FInputActionValue& Value);
 	void Rotate(const FInputActionValue& Value);
+
+	void OnDropTimeout();
 };
