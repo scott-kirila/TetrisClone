@@ -22,20 +22,6 @@ ATetrisPiece::ATetrisPiece()
 
 	Block3 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Block3"));
 	Block3->SetupAttachment(RootComponent);
-	
-	// for (int i = 0; i < 4; i++)
-	// {
-	// 	auto Name = FString::Printf(TEXT("Block_%d"), i);
-	// 	auto Block = CreateDefaultSubobject<USceneComponent>(FName(Name));
-	//
-	// 	if (i == 0)
-	// 	{
-	// 		SetRootComponent(Block);
-	// 	} else
-	// 	{
-	// 		Block->SetupAttachment(RootComponent);
-	// 	}
-	// }
 }
 
 // Called when the game starts or when spawned
@@ -69,25 +55,6 @@ void ATetrisPiece::Tick(float DeltaTime)
 
 	float MaxNegativeZDifference = 0.0f;
 	UActorComponent* LowestComponent {};
-	
-	// for (auto Component : Components)
-	// {
-	// 	auto SMComp = Cast<UStaticMeshComponent>(Component);
-	//
-	// 	auto Location = SMComp->GetComponentLocation();
-	// 	auto ZDifference = CurrentLocation.Z - Location.Z;
-	//
-	// 	if (ZDifference < MaxNegativeZDifference)
-	// 	{
-	// 		LowestComponent = SMComp;
-	// 	}
-	// }
-	//
-	// if (LowestComponent)
-	// {
-	// 	auto Str = FString::Printf(TEXT("%f"), MaxNegativeZDifference);
-	// 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Str);
-	// }
 }
 
 // Called to bind functionality to input
@@ -162,35 +129,14 @@ void ATetrisPiece::CheckForStop()
 		FVector Start = Mesh->GetComponentLocation() - FVector::UpVector * 45.0f;
 		FVector End = Start - FVector::UpVector * TraceDistance;
 		FHitResult OutHit;
-		// TArray<FHitResult> OutHits;
 		DrawDebugLine(GetWorld(), Start, End, FColor::Green, true, 1, 0, 5);
 		GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_WorldStatic);
-		// GetWorld()->LineTraceMultiByChannel(OutHits, Start, End, ECC_WorldStatic);
 
 		if (OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
 		{
-			auto Name = OutHit.Component->GetReadableName();
-			GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Name);
-
 			bCanMove = false;
 			bCanRotate = false;
 			GetWorldTimerManager().ClearTimer(DropTimer);
 		}
-		
-		// auto Str = FString::Printf(TEXT("%d"), OutHits.Num());
-		//
-		// for (auto& OutHit : OutHits)
-		// {
-		// 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Str);
-		// 	if (OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
-		// 	{
-		// 		auto Name = OutHit.Component->GetReadableName();
-		// 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Name);
-		//
-		// 		bCanMove = false;
-		// 		bCanRotate = false;
-		// 		GetWorldTimerManager().ClearTimer(DropTimer);
-		// 	}
-		// }
 	}
 }
