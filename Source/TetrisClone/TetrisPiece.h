@@ -30,8 +30,11 @@ public:
 	ATetrisPlayerController* PlayerController;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UInputAction* MoveAction;
+	UInputAction* LeftRightAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UInputAction* DownAction;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputAction* RotateAction;
 	
@@ -53,8 +56,9 @@ public:
 	void OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 		FVector NormalImpulse, const FHitResult& Hit);
 
-	void Move(const FInputActionValue& Value);
-	void Rotate(const FInputActionValue& Value);
+	void LeftRight(const FInputActionValue& Value);
+	void Down();
+	void Rotate();
 
 	void OnDropTimeout();
 };

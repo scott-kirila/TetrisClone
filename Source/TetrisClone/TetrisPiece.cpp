@@ -39,6 +39,31 @@ void ATetrisPiece::Tick(float DeltaTime)
 	{
 		GetWorldTimerManager().ClearTimer(DropTimer);
 	}
+
+	auto CurrentLocation = GetActorLocation();
+	auto Components = GetComponents();
+
+	float MaxNegativeZDifference = 0.0f;
+	UActorComponent* LowestComponent {};
+	
+	// for (auto Component : Components)
+	// {
+	// 	auto SMComp = Cast<UStaticMeshComponent>(Component);
+	//
+	// 	auto Location = SMComp->GetComponentLocation();
+	// 	auto ZDifference = CurrentLocation.Z - Location.Z;
+	//
+	// 	if (ZDifference < MaxNegativeZDifference)
+	// 	{
+	// 		LowestComponent = SMComp;
+	// 	}
+	// }
+	//
+	// if (LowestComponent)
+	// {
+	// 	auto Str = FString::Printf(TEXT("%f"), MaxNegativeZDifference);
+	// 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::White, Str);
+	// }
 }
 
 // Called to bind functionality to input
@@ -50,8 +75,9 @@ void ATetrisPiece::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	if (EnhancedInputComponent)
 	{
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATetrisPiece::Move);
-
+		EnhancedInputComponent->BindAction(LeftRightAction, ETriggerEvent::Triggered, this, &ATetrisPiece::LeftRight);
+		EnhancedInputComponent->BindAction(DownAction, ETriggerEvent::Triggered, this, &ATetrisPiece::Down);
+		
 		if (bCanRotate)
 		{
 			EnhancedInputComponent->BindAction(RotateAction, ETriggerEvent::Started, this, &ATetrisPiece::Rotate);
@@ -65,27 +91,42 @@ void ATetrisPiece::OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 	bCanMove = false;
 }
 
-void ATetrisPiece::Move(const FInputActionValue& Value)
+void ATetrisPiece::LeftRight(const FInputActionValue& Value)
 {
 	if (!bCanMove) return;
+
+	float ActionValue = Value.Get<float>();
+	float Direction = FMath::Sign(ActionValue);
 	
 	auto CurrentLocation = GetActorLocation();
-	SetActorLocation({CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z + 5}, true);
+	SetActorLocation({CurrentLocation.X + Direction * 100.0f, CurrentLocation.Y, CurrentLocation.Z + 5});
 }
 
-void ATetrisPiece::Rotate(const FInputActionValue& Value)
+void ATetrisPiece::Down()
+{
+	if (!bCanMove) return;
+
+	auto CurrentLocation = GetActorLocation();
+	SetActorLocation({CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f});
+}
+
+void ATetrisPiece::Rotate()
 {
 	if (!bCanMove) return;
 	
 	auto Rotation = FRotator(-90.0f, 0.0f, 0.0f);
+	
+	// auto StartQuat = GetActorRotation().Quaternion();
+	// auto EndQuat = StartQuat * Rotation.Quaternion();
+	// auto SlerpedQuat = FQuat::Slerp(StartQuat, EndQuat, 1.0f);
+	// SetActorRotation(SlerpedQuat);
+	
 	AddActorLocalRotation(Rotation);
 }
 
 void ATetrisPiece::OnDropTimeout()
 {
 	auto CurrentLocation = GetActorLocation();
-
-	
 	
 	auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f);
 	SetActorLocation(NewLocation);
