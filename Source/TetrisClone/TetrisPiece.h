@@ -26,6 +26,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ATetrisPiece> PieceToSpawn;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* RootBlock;
 
@@ -60,6 +63,7 @@ public:
 	bool bCanRotate = true;
 	
 	FTimerHandle DropTimer;
+	FTimerHandle SpawnTimer;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -75,6 +79,7 @@ public:
 	void Down();
 	void Rotate();
 	void OnDropTimeout();
+	void OnSpawnTimeout();
 	
 	void CheckForStop();
 };

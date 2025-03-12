@@ -119,6 +119,11 @@ void ATetrisPiece::OnDropTimeout()
 	CheckForStop();
 }
 
+void ATetrisPiece::OnSpawnTimeout()
+{
+	GetWorld()->SpawnActor<ATetrisPiece>(PieceToSpawn, FVector(-20.0f, -210.0f, 650.0f), FRotator::ZeroRotator);
+}
+
 void ATetrisPiece::CheckForStop()
 {
 	TArray<USceneComponent*> Meshes;
@@ -137,6 +142,7 @@ void ATetrisPiece::CheckForStop()
 			bCanMove = false;
 			bCanRotate = false;
 			GetWorldTimerManager().ClearTimer(DropTimer);
+			GetWorldTimerManager().SetTimer(SpawnTimer, this, &ATetrisPiece::OnSpawnTimeout, 1.0f, false, 1.0f);
 		}
 	}
 }
