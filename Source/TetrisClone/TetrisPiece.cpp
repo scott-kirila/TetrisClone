@@ -96,7 +96,44 @@ void ATetrisPiece::Rotate()
 {
 	if (!bCanMove || !bCanRotate) return;
 
+	// Amount to rotate
 	auto Rotation = FRotator(-90.0f, 0.0f, 0.0f);
+
+	// Check if rotation is allowed
+	FVector RootLocation = GetActorLocation();
+
+	TArray<USceneComponent*> Components;
+	GetComponents(Components);
+
+	FVector Right = FVector::ForwardVector;
+	FVector Down = -FVector::UpVector;
+	FVector Left = -Right;
+	TArray<FVector> Directions { Right, Down, Left };
+	
+	for (const auto& Component : Components)
+	{
+		FVector ComponentLocation = Component->GetComponentLocation();
+		FVector ComponentVector = ComponentLocation - RootLocation;
+		ComponentVector = {ComponentVector.Z, ComponentVector.Y, -ComponentVector.X};
+		ComponentLocation = RootLocation + ComponentVector;
+		
+		for (const auto& Direction : Directions)
+		{
+			FVector Start = ComponentLocation - Direction * 45.0f;
+			FVector End = Start - Direction * TraceDistance;
+			FHitResult OutHit;
+			DrawDebugLine(GetWorld(), Start, End, FColor::Blue, true, 1, 0, 5);
+			GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_WorldStatic);
+
+			if (!bIsStopping && OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
+			{
+				return;
+			}
+		}
+	}
+	
+	
+	// Follow through
 	AddActorLocalRotation(Rotation);
 
 	CheckStoppingConditions();
