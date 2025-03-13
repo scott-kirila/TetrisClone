@@ -63,7 +63,16 @@ public:
 	bool bCanMove = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanMoveLeft = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanMoveRight = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanRotate = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsStopping = false;
 	
 	FTimerHandle DropTimer;
 	FTimerHandle SpawnTimer;
@@ -74,15 +83,12 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// UFUNCTION()
-	// void OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	// 	FVector NormalImpulse, const FHitResult& Hit);
-
 	void LeftRight(const FInputActionValue& Value);
 	void Down();
 	void Rotate();
 	void OnDropTimeout();
 	void OnSpawnTimeout();
 	
-	void CheckForStop();
+	void CheckStoppingConditions();
+	void Stop();
 };
