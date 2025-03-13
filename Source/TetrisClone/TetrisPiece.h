@@ -12,6 +12,15 @@
 
 #include "TetrisPiece.generated.h"
 
+enum StopSide
+{
+	Bottom,
+	Left,
+	Right,
+	BothSides,
+	None,
+};
+
 UCLASS()
 class TETRISCLONE_API ATetrisPiece : public APawn
 {
@@ -88,7 +97,8 @@ public:
 	void Rotate();
 	void OnDropTimeout();
 	void OnSpawnTimeout();
-	
+
+	StopSide CheckForObstacles(bool ForRotation);
 	void CheckStoppingConditions();
 	void Stop();
 };

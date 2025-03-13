@@ -96,53 +96,25 @@ void ATetrisPiece::Rotate()
 {
 	if (!bCanMove || !bCanRotate) return;
 
-	// Amount to rotate
 	auto Rotation = FRotator(-90.0f, 0.0f, 0.0f);
+	auto Result = CheckForObstacles(true);
 
-	// Check if rotation is allowed
-	FVector RootLocation = GetActorLocation();
-
-	TArray<USceneComponent*> Components;
-	GetComponents(Components);
-
-	FVector Right = FVector::ForwardVector;
-	FVector Down = -FVector::UpVector;
-	FVector Left = -Right;
-	TArray<FVector> Directions { Right, Down, Left };
-	
-	for (const auto& Component : Components)
-	{
-		FVector ComponentLocation = Component->GetComponentLocation();
-		FVector ComponentVector = ComponentLocation - RootLocation;
-		ComponentVector = {ComponentVector.Z, ComponentVector.Y, -ComponentVector.X};
-		ComponentLocation = RootLocation + ComponentVector;
-		
-		for (const auto& Direction : Directions)
+	switch (Result) {
+	case StopSide::None:
 		{
-			FVector Start = ComponentLocation - Direction * 45.0f;
-			FVector End = Start - Direction * TraceDistance;
-			FHitResult OutHit;
-			DrawDebugLine(GetWorld(), Start, End, FColor::Blue, true, 1, 0, 5);
-			GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_WorldStatic);
-
-			if (!bIsStopping && OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
-			{
-				return;
-			}
+			// Follow through
+			AddActorLocalRotation(Rotation);
+			CheckStoppingConditions();
+		} break;
+	default:
+		{
+			return;
 		}
 	}
-	
-	
-	// Follow through
-	AddActorLocalRotation(Rotation);
-
-	CheckStoppingConditions();
 }
 
 void ATetrisPiece::OnDropTimeout()
 {
-	// if (!bCanMove) return;
-	
 	auto CurrentLocation = GetActorLocation();
 	
 	auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f);
@@ -161,47 +133,104 @@ void ATetrisPiece::OnSpawnTimeout()
 	GetWorld()->SpawnActor<ATetrisPiece>(SpawnMe, FVector(-20.0f, -210.0f, 650.0f), FRotator::ZeroRotator);
 }
 
-void ATetrisPiece::CheckStoppingConditions()
+StopSide ATetrisPiece::CheckForObstacles(bool ForRotation)
 {
-	bCanMoveLeft = true;
-	bCanMoveRight = true;
-	
-	TArray<USceneComponent*> Meshes;
-	GetComponents(Meshes, true);
+	// Check if rotation is allowed
+	FVector RootLocation = GetActorLocation();
+
+	TArray<USceneComponent*> Components;
+	GetComponents(Components);
 
 	FVector Right = FVector::ForwardVector;
 	FVector Down = -FVector::UpVector;
 	FVector Left = -Right;
 	TArray<FVector> Directions { Right, Down, Left };
+
+	bool bLeftSide = false;
+	bool bRightSide = false;
 	
-	for (auto& Mesh : Meshes)
+	for (const auto& Component : Components)
 	{
+		FVector ComponentLocation = Component->GetComponentLocation();
+
+		if (ForRotation)
+		{
+			FVector ComponentVector = ComponentLocation - RootLocation;
+			ComponentVector = {ComponentVector.Z, ComponentVector.Y, -ComponentVector.X};
+			ComponentLocation = RootLocation + ComponentVector;
+		}
+			
 		for (const auto& Direction : Directions)
 		{
-			FVector Start = Mesh->GetComponentLocation() + Direction * 45.0f;
-			FVector End = Start + Direction * TraceDistance;
+			float Sign = ForRotation ? -1.0f : 1.0f;
+			FVector Start = ComponentLocation + Sign * Direction * 45.0f;
+			FVector End = Start + Sign * Direction * TraceDistance;
 			FHitResult OutHit;
-			DrawDebugLine(GetWorld(), Start, End, FColor::Green, true, 1, 0, 5);
+
+			auto Color = ForRotation ? FColor::Blue : FColor::Green;
+			
+			DrawDebugLine(GetWorld(), Start, End, Color, false, 1, 0, 5);
 			GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_WorldStatic);
 
 			if (!bIsStopping && OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
 			{
 				if (Direction.Z == -1.0)
 				{
-					bIsStopping = true;
-					Stop();
-					return;
+					return StopSide::Bottom;
 				}
-
+				
 				if (Direction.X == 1.0f)
 				{
-					bCanMoveRight &= false;
+					bRightSide = true;
 				} else if (Direction.X == -1.0f)
 				{
-					bCanMoveLeft &= false;
+					bLeftSide = true;
 				}
 			}
 		}
+	}
+
+	if (bLeftSide || bRightSide)
+	{
+		if (!bRightSide) return StopSide::Left;
+
+		if (!bLeftSide) return StopSide::Right;
+
+		return StopSide::BothSides;
+	}
+
+	return StopSide::None;
+}
+
+void ATetrisPiece::CheckStoppingConditions()
+{
+	bCanMoveLeft = true;
+	bCanMoveRight = true;
+
+	auto Result = CheckForObstacles(false);
+
+	switch (Result) {
+	case StopSide::Bottom:
+		{
+			bIsStopping = true;
+			Stop();
+			return;
+		} break;
+	case StopSide::Left:
+		{
+			bCanMoveLeft = false;
+		} break;
+	case StopSide::Right:
+		{
+			bCanMoveRight = false;
+		} break;
+	case StopSide::BothSides:
+		{
+			bCanMoveLeft = false;
+			bCanMoveRight = false;
+		} break;
+	default:
+		return;
 	}
 }
 
