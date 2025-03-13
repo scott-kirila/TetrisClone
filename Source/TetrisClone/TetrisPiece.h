@@ -26,6 +26,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<ATetrisPiece>> BlockTypes;
+	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ATetrisPiece> PieceToSpawn;
 	

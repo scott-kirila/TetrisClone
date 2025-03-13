@@ -121,7 +121,12 @@ void ATetrisPiece::OnDropTimeout()
 
 void ATetrisPiece::OnSpawnTimeout()
 {
-	GetWorld()->SpawnActor<ATetrisPiece>(PieceToSpawn, FVector(-20.0f, -210.0f, 650.0f), FRotator::ZeroRotator);
+	if (BlockTypes.IsEmpty()) return;
+	
+	auto Index = FMath::RandRange(0, BlockTypes.Num() - 1);
+	auto SpawnMe = BlockTypes[Index];
+	
+	GetWorld()->SpawnActor<ATetrisPiece>(SpawnMe, FVector(-20.0f, -210.0f, 650.0f), FRotator::ZeroRotator);
 }
 
 void ATetrisPiece::CheckForStop()
