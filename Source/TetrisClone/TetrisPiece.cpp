@@ -67,7 +67,7 @@ void ATetrisPiece::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void ATetrisPiece::LeftRight(const FInputActionValue& Value)
 {
-	if (!bCanMove) return;
+	// if (!bCanMove) return;
 
 	float ActionValue = Value.Get<float>();
 	float Direction = FMath::Sign(ActionValue);
@@ -80,6 +80,12 @@ void ATetrisPiece::LeftRight(const FInputActionValue& Value)
 	}
 
 	CheckStoppingConditions();
+
+	if (bIsStopping)
+	{
+		bCanMoveLeft = false;
+		bCanMoveRight = false;
+	}
 }
 
 void ATetrisPiece::Down()
@@ -148,43 +154,88 @@ StopSide ATetrisPiece::CheckForObstacles(bool ForRotation)
 
 	bool bLeftSide = false;
 	bool bRightSide = false;
+
+	auto Result = StopSide::None;
 	
 	for (const auto& Component : Components)
 	{
 		FVector ComponentLocation = Component->GetComponentLocation();
-
+		
 		if (ForRotation)
 		{
+			if (Component == RootBlock) continue;
+			
 			FVector ComponentVector = ComponentLocation - RootLocation;
 			ComponentVector = {ComponentVector.Z, ComponentVector.Y, -ComponentVector.X};
-			ComponentLocation = RootLocation + ComponentVector;
-		}
-			
-		for (const auto& Direction : Directions)
-		{
-			float Sign = ForRotation ? -1.0f : 1.0f;
-			FVector Start = ComponentLocation + Sign * Direction * 45.0f;
-			FVector End = Start + Sign * Direction * TraceDistance;
-			FHitResult OutHit;
+			FVector NewLocation = RootLocation + ComponentVector;
 
-			auto Color = ForRotation ? FColor::Blue : FColor::Green;
-			
-			DrawDebugLine(GetWorld(), Start, End, Color, false, 1, 0, 5);
-			GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_WorldStatic);
+			// ComponentVector *= -1.0f;
+			// ComponentVector.Normalize();
 
-			if (!bIsStopping && OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
+			FVector Start = ComponentLocation; // + 45.0f * ComponentVector;
+			FVector End = NewLocation; //Start + ComponentVector * TraceDistance;
+
+			auto XDiff = End.X - Start.X;
+			auto ZDiff = End.Z - Start.Z;
+
+			FVector Mid {};
+			
+			if (XDiff * ZDiff > 0.0f)
 			{
-				if (Direction.Z == -1.0)
+				Mid = { Start.X, Start.Y, End.Z };
+			} else
+			{
+				Mid = { End.X, Start.Y, Start.Z };
+			}
+			
+			FHitResult OutHit1;
+			FHitResult OutHit2;
+
+			auto Color1 = FColor::Blue;
+			auto Color2 = FColor::Orange;
+			DrawDebugLine(GetWorld(), Start, Mid, Color1, false, 2, 0, 5);
+			GetWorld()->LineTraceSingleByChannel(OutHit1, Start, Mid, ECC_WorldStatic);
+
+			DrawDebugLine(GetWorld(), Mid, End, Color2, false, 2, 0, 5);
+			GetWorld()->LineTraceSingleByChannel(OutHit2, Mid, End, ECC_WorldStatic);
+
+			if (!bIsStopping && OutHit1.bBlockingHit && OutHit1.Component->GetOwner() != this)
+			{
+				Result = StopSide::Left;
+			}
+			if (!bIsStopping && OutHit2.bBlockingHit && OutHit2.Component->GetOwner() != this)
+			{
+				Result = StopSide::Left;
+			}
+		}
+
+		if (!ForRotation)
+		{
+			for (const auto& Direction : Directions)
+			{
+				// float Sign = ForRotation ? -1.0f : 1.0f;
+				FVector Start = ComponentLocation + Direction * 45.0f;
+				FVector End = Start + Direction * TraceDistance;
+				FHitResult OutHit;
+
+				auto Color = FColor::Green;
+				DrawDebugLine(GetWorld(), Start, End, Color, false, 2.0f, 0, 5);
+				GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_WorldStatic);
+					
+				if (!bIsStopping && OutHit.bBlockingHit && OutHit.Component->GetOwner() != this)
 				{
-					return StopSide::Bottom;
-				}
-				
-				if (Direction.X == 1.0f)
-				{
-					bRightSide = true;
-				} else if (Direction.X == -1.0f)
-				{
-					bLeftSide = true;
+					if (Direction.Z == -1.0)
+					{
+						return StopSide::Bottom;
+					}
+					
+					if (Direction.X == 1.0f)
+					{
+						bRightSide = true;
+					} else if (Direction.X == -1.0f)
+					{
+						bLeftSide = true;
+					}
 				}
 			}
 		}
@@ -199,7 +250,7 @@ StopSide ATetrisPiece::CheckForObstacles(bool ForRotation)
 		return StopSide::BothSides;
 	}
 
-	return StopSide::None;
+	return Result;
 }
 
 void ATetrisPiece::CheckStoppingConditions()
@@ -237,8 +288,8 @@ void ATetrisPiece::CheckStoppingConditions()
 void ATetrisPiece::Stop()
 {
 	bCanMove = false;
-	bCanMoveLeft = false;
-	bCanMoveRight = false;
+	// bCanMoveLeft = false;
+	// bCanMoveRight = false;
 	bCanRotate = false;
 	GetWorldTimerManager().ClearTimer(DropTimer);
 	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ATetrisPiece::OnSpawnTimeout, 1.0f, false, 1.0f);
