@@ -28,6 +28,9 @@ protected:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMaterial* Color;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* Root;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* Block0;
@@ -77,9 +80,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanRotate = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanSlide = true;
+
 	TStaticArray<UStaticMeshComponent*, 4> Blocks;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCanSpawn = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<APiece>> BlockTypes;
 	
 	FTimerHandle DropTimer;
+	FTimerHandle StopLeftRightTimer;
+	FTimerHandle SpawnTimer;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -91,6 +105,8 @@ public:
 	void DownwardBurst();
 	void Rotate();
 	void OnDropTimeout();
+	void OnStopLeftRightTimeout();
+	void OnSpawnTimeout();
 
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,

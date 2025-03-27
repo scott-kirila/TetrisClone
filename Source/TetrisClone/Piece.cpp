@@ -13,12 +13,15 @@ APiece::APiece()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(Root);
+	
 	// Root Block
 	Block0 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootBlock"));
-	SetRootComponent(Block0);
+	Block0->SetupAttachment(RootComponent);
 
 	Collider0 = CreateDefaultSubobject<USphereComponent>(TEXT("RootColliderA"));
-	Collider0->SetupAttachment(RootComponent);
+	Collider0->SetupAttachment(Block0);
 	Collider0->SetSphereRadius(70.0f);
 
 	// Block 1
@@ -78,6 +81,9 @@ void APiece::BeginPlay()
 
 	Collider3->OnComponentBeginOverlap.AddDynamic(this, &APiece::OnBeginOverlap);
 	Collider3->OnComponentEndOverlap.AddDynamic(this, &APiece::OnEndOverlap);
+
+	GetWorldTimerManager().SetTimer(DropTimer, this, &APiece::OnDropTimeout, 1.0f, true, 1.0f);
+
 }
 
 // Called every frame
@@ -85,6 +91,14 @@ void APiece::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!bCanMoveDown)
+	{
+		if (bCanSpawn)
+		{
+			bCanSpawn = false;
+			GetWorldTimerManager().SetTimer(SpawnTimer, this, &APiece::OnSpawnTimeout, 1.0f, false, 1.0f);
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -176,6 +190,22 @@ void APiece::Rotate()
 
 void APiece::OnDropTimeout()
 {
+	if (!bCanMoveDown) return;
+	
+	auto CurrentLocation = GetActorLocation();
+	
+	auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f);
+	SetActorLocation(NewLocation);
+}
+
+void APiece::OnSpawnTimeout()
+{
+	if (BlockTypes.IsEmpty()) return;
+
+	auto Index = FMath::RandRange(0, BlockTypes.Num() - 1);
+	auto SpawnMe = BlockTypes[Index];
+	
+	GetWorld()->SpawnActor<APiece>(SpawnMe, FVector(0.0f, -300.0f, 950.0f), FRotator::ZeroRotator);
 }
 
 void APiece::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -193,17 +223,32 @@ void APiece::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 		FHitResult HitResult;
 		FVector Start = OverlappedComponent->GetComponentLocation();
 		FVector End = Start + Direction * 100.0f;
+
+		ECollisionChannel CollisionChannel = ECC_Visibility;
+		
+		FCollisionQueryParams QueryParameters;
+		QueryParameters.AddIgnoredActor(this);
+
 		DrawDebugLine(GetWorld(), Start, End, FColor::Red, true, 1, 0, 5);
-		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic);
+		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, CollisionChannel, QueryParameters);
 
 		if (bDidHit)
 		{
+			DrawDebugLine(GetWorld(), Start, End, FColor::Silver, true, 1, 0, 5);
+			
 			if (Direction == Down)
 			{
 				bCanMoveDown = false;
 				bCanMoveLeft = false;
 				bCanMoveRight = false;
 				bCanRotate = false;
+
+				Collider0->SetCollisionResponseToAllChannels(ECR_Block);
+				Collider1->SetCollisionResponseToAllChannels(ECR_Block);
+				Collider2->SetCollisionResponseToAllChannels(ECR_Block);
+				Collider3->SetCollisionResponseToAllChannels(ECR_Block);
+	
+				GetWorldTimerManager().ClearTimer(DropTimer);
 			}
 			else if (Direction == Left)
 			{
@@ -221,8 +266,8 @@ void APiece::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 {
 	if (OtherActor == this) return;
 
-		bool _bCanMoveLeft = true;
-		bool _bCanMoveRight = true;
+	bool _bCanMoveLeft = true;
+	bool _bCanMoveRight = true;
 	
 	TArray<FVector> Directions = { -FVector::ForwardVector, FVector::ForwardVector };
 
