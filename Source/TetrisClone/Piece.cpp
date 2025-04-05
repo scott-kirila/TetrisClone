@@ -90,14 +90,11 @@ void APiece::BeginPlay()
 void APiece::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	if (!bCanMoveDown)
 	{
-		if (bCanSpawn)
-		{
-			bCanSpawn = false;
-			GetWorldTimerManager().SetTimer(SpawnTimer, this, &APiece::OnSpawnTimeout, 1.0f, false, 1.0f);
-		}
+		Stop();
+		SpawnNewPiece();	
 	}
 }
 
@@ -161,15 +158,9 @@ void APiece::Rotate()
 		auto ZDiff = End.Z - Start.Z;
 
 		FVector Mid {};
-			
-		if (XDiff * ZDiff > 0.0f)
-		{
-			Mid = { Start.X, Start.Y, End.Z };
-		} else
-		{
-			Mid = { End.X, Start.Y, Start.Z };
-		}
 
+		Mid = XDiff * ZDiff > 0.0f ? FVector(Start.X, Start.Y, End.Z) : FVector(End.X, Start.Y, Start.Z);
+		
 		FHitResult OutHit1;
 		FHitResult OutHit2;
 
@@ -208,8 +199,30 @@ void APiece::OnSpawnTimeout()
 	GetWorld()->SpawnActor<APiece>(SpawnMe, FVector(0.0f, -300.0f, 950.0f), FRotator::ZeroRotator);
 }
 
+void APiece::Stop()
+{
+	bCanMoveLeft  = false;
+	bCanMoveRight = false;
+	bCanRotate    = false;
+
+	Collider0->SetCollisionResponseToAllChannels(ECR_Block);
+	Collider1->SetCollisionResponseToAllChannels(ECR_Block);
+	Collider2->SetCollisionResponseToAllChannels(ECR_Block);
+	Collider3->SetCollisionResponseToAllChannels(ECR_Block);
+	
+	GetWorldTimerManager().ClearTimer(DropTimer);
+}
+
+void APiece::SpawnNewPiece()
+{
+	if (!bCanSpawn) return;
+	
+	bCanSpawn = false;
+	GetWorldTimerManager().SetTimer(SpawnTimer, this, &APiece::OnSpawnTimeout, 1.0f, false, 1.0f);
+}
+
 void APiece::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                            UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == this) return;
 
@@ -224,40 +237,15 @@ void APiece::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 		FVector Start = OverlappedComponent->GetComponentLocation();
 		FVector End = Start + Direction * 100.0f;
 
-		ECollisionChannel CollisionChannel = ECC_Visibility;
-		
 		FCollisionQueryParams QueryParameters;
 		QueryParameters.AddIgnoredActor(this);
 
 		DrawDebugLine(GetWorld(), Start, End, FColor::Red, true, 1, 0, 5);
-		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, CollisionChannel, QueryParameters);
-
-		if (bDidHit)
-		{
-			DrawDebugLine(GetWorld(), Start, End, FColor::Silver, true, 1, 0, 5);
-			
-			if (Direction == Down)
-			{
-				bCanMoveDown = false;
-				bCanMoveLeft = false;
-				bCanMoveRight = false;
-				bCanRotate = false;
-
-				Collider0->SetCollisionResponseToAllChannels(ECR_Block);
-				Collider1->SetCollisionResponseToAllChannels(ECR_Block);
-				Collider2->SetCollisionResponseToAllChannels(ECR_Block);
-				Collider3->SetCollisionResponseToAllChannels(ECR_Block);
-	
-				GetWorldTimerManager().ClearTimer(DropTimer);
-			}
-			else if (Direction == Left)
-			{
-				bCanMoveLeft = false;
-			} else if (Direction == Right)
-			{
-				bCanMoveRight = false;
-			}
-		}
+		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParameters);
+		
+		bCanMoveDown  &= (Direction != Down)  || !bDidHit;
+		bCanMoveLeft  &= (Direction != Left)  || !bDidHit;
+		bCanMoveRight &= (Direction != Right) || !bDidHit;
 	}
 }
 
@@ -266,28 +254,30 @@ void APiece::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 {
 	if (OtherActor == this) return;
 
-	bool _bCanMoveLeft = true;
+	// Changing the actual values early could introduce movement bugs!
+	bool _bCanMoveLeft  = true;
 	bool _bCanMoveRight = true;
-	
-	TArray<FVector> Directions = { -FVector::ForwardVector, FVector::ForwardVector };
 
+	FVector Left = -FVector::ForwardVector;
+	FVector Right = -Left;
+	TArray<FVector> Directions = { Left, Right };
+	
 	for (const auto& Direction : Directions)
 	{
 		FHitResult HitResult;
 		FVector Start = OverlappedComponent->GetComponentLocation();
 		FVector End = Start + Direction * 100.0f;
+
+		FCollisionQueryParams QueryParameters;
+		QueryParameters.AddIgnoredActor(this);
+		
 		DrawDebugLine(GetWorld(), Start, End, FColor::Green, true, 1, 0, 5);
-		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_WorldStatic);
+		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParameters);
 
-		if (Direction.X < 0.0f)
-		{
-			_bCanMoveLeft &= !bDidHit;
-		} else
-		{
-			_bCanMoveRight &= !bDidHit;
-		}
-
-		bCanMoveLeft = _bCanMoveLeft;
-		bCanMoveRight = _bCanMoveRight;
+		_bCanMoveLeft  &= (Direction != Left)  || !bDidHit;
+		_bCanMoveRight &= (Direction != Right) || !bDidHit;
 	}
+
+	bCanMoveLeft  = _bCanMoveLeft;
+	bCanMoveRight = _bCanMoveRight;
 }

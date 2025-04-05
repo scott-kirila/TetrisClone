@@ -84,7 +84,7 @@ public:
 	bool bCanSlide = true;
 
 	TStaticArray<UStaticMeshComponent*, 4> Blocks;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanSpawn = true;
 	
@@ -108,6 +108,9 @@ public:
 	void OnStopLeftRightTimeout();
 	void OnSpawnTimeout();
 
+	void Stop();
+	void SpawnNewPiece();
+	
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
