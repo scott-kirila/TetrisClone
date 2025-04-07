@@ -167,10 +167,10 @@ void APiece::Rotate()
 
 		auto Color1 = FColor::Blue;
 		auto Color2 = FColor::Orange;
-		DrawDebugLine(GetWorld(), Start, Mid, Color1, false, 2, 0, 5);
+		DrawDebugLine(GetWorld(), Start, Mid, Color1, false, 1, 0, 5);
 		GetWorld()->LineTraceSingleByChannel(OutHit1, Start, Mid, ECC_WorldStatic);
 
-		DrawDebugLine(GetWorld(), Mid, End, Color2, false, 2, 0, 5);
+		DrawDebugLine(GetWorld(), Mid, End, Color2, false, 1, 0, 5);
 		GetWorld()->LineTraceSingleByChannel(OutHit2, Mid, End, ECC_WorldStatic);
 
 		if (OutHit1.bBlockingHit || OutHit2.bBlockingHit) return;
