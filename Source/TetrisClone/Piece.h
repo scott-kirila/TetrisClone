@@ -74,7 +74,6 @@ public:
 	TArray<TSubclassOf<APiece>> BlockTypes;
 	
 	FTimerHandle DropTimer;
-	FTimerHandle StopLeftRightTimer;
 	FTimerHandle SpawnTimer;
 	
 	// Called every frame

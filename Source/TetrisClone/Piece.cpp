@@ -74,13 +74,16 @@ void APiece::Tick(float DeltaTime)
 	FVector Direction = { 0.0f, 0.0f, -1.0f };
 	if (!CanMoveToward(Direction))
 	{
+		if (!bCanSlide)
+		{
+			Stop();
+			SpawnNewPiece();
+		}
+
 		bCanMoveDown = false;
-	}
-	
-	if (!bCanMoveDown)
+	} else
 	{
-		Stop();
-		SpawnNewPiece();	
+		bCanMoveDown = true;
 	}
 }
 
@@ -110,6 +113,12 @@ void APiece::MoveHorizontally(const FInputActionValue& Value)
 
 	FVector DirectionVector = { ActionValue, 0.0f, 0.0f };
 	if (!CanMoveToward(DirectionVector)) return;
+
+	if (!bCanMoveDown)
+	{
+		if (!bCanSlide) return;
+		bCanSlide = false;
+	}
 	
 	auto CurrentLocation = GetActorLocation();
 
@@ -196,7 +205,9 @@ void APiece::OnSpawnTimeout()
 
 void APiece::Stop()
 {
-	bCanRotate    = false;
+	if (bCanSlide) return;
+	
+	bCanRotate = false;
 	
 	GetWorldTimerManager().ClearTimer(DropTimer);
 }
