@@ -5,8 +5,6 @@
 
 #include "EnhancedInputComponent.h"
 
-#include "Block.h"
-
 // Sets default values
 APiece::APiece()
 {
@@ -63,7 +61,7 @@ void APiece::BeginPlay()
 	}
 
 	GetWorldTimerManager().SetTimer(DropTimer, this, &APiece::OnDropTimeout, 1.0f, true, 1.0f);
-
+	BlockedFromBelow.AddDynamic(this, &APiece::Stop);
 }
 
 // Called every frame
@@ -71,19 +69,11 @@ void APiece::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	FVector Direction = { 0.0f, 0.0f, -1.0f };
-	if (!CanMoveToward(Direction))
+	FVector Down = { 0.0f, 0.0f, -1.0f };
+	if (!CanMoveToward(Down))
 	{
-		if (!bCanSlide)
-		{
-			Stop();
-			SpawnNewPiece();
-		}
-
-		bCanMoveDown = false;
-	} else
-	{
-		bCanMoveDown = true;
+		// Stop();
+		SpawnNewPiece();
 	}
 }
 
@@ -113,25 +103,13 @@ void APiece::MoveHorizontally(const FInputActionValue& Value)
 
 	FVector DirectionVector = { ActionValue, 0.0f, 0.0f };
 	if (!CanMoveToward(DirectionVector)) return;
-
-	if (!bCanMoveDown)
-	{
-		if (!bCanSlide) return;
-		bCanSlide = false;
-	}
 	
 	auto CurrentLocation = GetActorLocation();
-
-	if ((Sign < 0.0f) || (Sign > 0.0f))
-	{
-		SetActorLocation({CurrentLocation.X + Sign * 100.0f, CurrentLocation.Y, CurrentLocation.Z});
-	}
+	SetActorLocation({CurrentLocation.X + Sign * 100.0f, CurrentLocation.Y, CurrentLocation.Z});
 }
 
 void APiece::DownwardBurst()
 {
-	if (!bCanMoveDown) return;
-
 	FVector Direction = { 0.0f, 0.0f, -1.0f };
 	if (!CanMoveToward(Direction)) return;
 	
@@ -182,8 +160,6 @@ void APiece::Rotate()
 
 void APiece::OnDropTimeout()
 {
-	if (!bCanMoveDown) return;
-	
 	FVector Direction = { 0.0f, 0.0f, -1.0f};
 	if (!CanMoveToward(Direction)) return;
 	
@@ -205,11 +181,20 @@ void APiece::OnSpawnTimeout()
 
 void APiece::Stop()
 {
-	if (bCanSlide) return;
+	if (!bShouldStop)
+	{
+		FScopeLock Lock(&Mutex);
+		bShouldStop = true;
+
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Triggered!"));
+	}
 	
 	bCanRotate = false;
-	
-	GetWorldTimerManager().ClearTimer(DropTimer);
+
+	if (GetWorldTimerManager().IsTimerActive(DropTimer))
+	{
+		GetWorldTimerManager().ClearTimer(DropTimer);
+	}
 }
 
 void APiece::SpawnNewPiece()
@@ -241,6 +226,11 @@ bool APiece::CanMoveToward(FVector Direction)
 		DrawDebugLine(GetWorld(), Start, End, Color, false, 1, 0, 5);
 
 		Result &= !bDidHit;
+	}
+
+	if (!Result && (Direction.Z < 0.0f))
+	{
+		BlockedFromBelow.Broadcast();
 	}
 
 	return Result;

@@ -8,9 +8,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputAction.h"
 #include "Components/StaticMeshComponent.h"
-#include "Components/SphereComponent.h"
 
 #include "Piece.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBlockedFromBelow);
 
 UCLASS()
 class TETRISCLONE_API APiece : public APawn
@@ -26,9 +27,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UMaterial* Color;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USceneComponent* Root;
 	
@@ -55,26 +53,26 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputMappingContext* InputMappingContext;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bCanMoveDown = true;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanRotate = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanSlide = true;
 
 	TStaticArray<UStaticMeshComponent*, 4> Blocks;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanSpawn = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bShouldStop = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<APiece>> BlockTypes;
 	
 	FTimerHandle DropTimer;
 	FTimerHandle SpawnTimer;
+
+	FBlockedFromBelow BlockedFromBelow;
+	mutable FCriticalSection Mutex;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -88,7 +86,9 @@ public:
 	void OnDropTimeout();
 	void OnSpawnTimeout();
 
+	UFUNCTION()
 	void Stop();
+
 	void SpawnNewPiece();
 
 	bool CanMoveToward(FVector Direction);
