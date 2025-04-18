@@ -73,7 +73,7 @@ void APiece::Tick(float DeltaTime)
 	if (!CanMoveToward(Down))
 	{
 		// Stop();
-		SpawnNewPiece();
+		// SpawnNewPiece();
 	}
 }
 
