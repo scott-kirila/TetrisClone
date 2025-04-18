@@ -30,6 +30,12 @@ protected:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	APiece* CurrentPiece;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UInputMappingContext* InputMappingContext;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	APlayerController* PlayerController;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector SpawnLocation = { 0.0f, -300.0f, 950.0f };
@@ -37,6 +43,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void OnSpawnTimeout();
-	void SpawnNewPiece();
+	void StartSpawnTimer();
+	void TriggerSpawn();
 };

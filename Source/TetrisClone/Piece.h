@@ -50,26 +50,19 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputAction* RotateAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UInputMappingContext* InputMappingContext;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCanRotate = true;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bCanSpawn = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bShouldStop = false;
 
 	TStaticArray<UStaticMeshComponent*, 4> Blocks;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanSpawn = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bShouldStop = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<APiece>> BlockTypes;
-	
 	FTimerHandle DropTimer;
-	FTimerHandle SpawnTimer;
 
 	FBlockedFromBelow BlockedFromBelow;
 	mutable FCriticalSection Mutex;
@@ -84,12 +77,9 @@ public:
 	void DownwardBurst();
 	void Rotate();
 	void OnDropTimeout();
-	void OnSpawnTimeout();
-
-	UFUNCTION()
-	void Stop();
-
-	void SpawnNewPiece();
 
 	bool CanMoveToward(FVector Direction);
+	
+	UFUNCTION()
+	void Stop();
 };

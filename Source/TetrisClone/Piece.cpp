@@ -45,21 +45,7 @@ APiece::APiece()
 void APiece::BeginPlay()
 {
 	Super::BeginPlay();
-
-	auto PlayerController = Cast<APlayerController>(Controller);
-
-	if (PlayerController)
-	{
-		auto Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
-
-		if (Subsystem)
-		{
-			Subsystem->AddMappingContext(InputMappingContext, 0);
-		}
-
-		PlayerController->Possess(this);
-	}
-
+	
 	GetWorldTimerManager().SetTimer(DropTimer, this, &APiece::OnDropTimeout, 1.0f, true, 1.0f);
 	BlockedFromBelow.AddDynamic(this, &APiece::Stop);
 }
@@ -68,13 +54,6 @@ void APiece::BeginPlay()
 void APiece::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	FVector Down = { 0.0f, 0.0f, -1.0f };
-	if (!CanMoveToward(Down))
-	{
-		// Stop();
-		// SpawnNewPiece();
-	}
 }
 
 // Called to bind functionality to input
@@ -174,42 +153,6 @@ void APiece::OnDropTimeout()
 	SetActorLocation(NewLocation);
 }
 
-void APiece::OnSpawnTimeout()
-{
-	if (BlockTypes.IsEmpty()) return;
-
-	auto Index = FMath::RandRange(0, BlockTypes.Num() - 1);
-	auto SpawnMe = BlockTypes[Index];
-	
-	GetWorld()->SpawnActor<APiece>(SpawnMe, FVector(0.0f, -300.0f, 950.0f), FRotator::ZeroRotator);
-}
-
-void APiece::Stop()
-{
-	if (!bShouldStop)
-	{
-		FScopeLock Lock(&Mutex);
-		bShouldStop = true;
-
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Triggered!"));
-	}
-	
-	bCanRotate = false;
-
-	if (GetWorldTimerManager().IsTimerActive(DropTimer))
-	{
-		GetWorldTimerManager().ClearTimer(DropTimer);
-	}
-}
-
-void APiece::SpawnNewPiece()
-{
-	if (!bCanSpawn) return;
-	
-	bCanSpawn = false;
-	GetWorldTimerManager().SetTimer(SpawnTimer, this, &APiece::OnSpawnTimeout, 1.0f, false, 1.0f);
-}
-
 bool APiece::CanMoveToward(FVector Direction)
 {
 	bool Result = true;
@@ -239,4 +182,22 @@ bool APiece::CanMoveToward(FVector Direction)
 	}
 
 	return Result;
+}
+
+void APiece::Stop()
+{
+	if (!bShouldStop)
+	{
+		FScopeLock Lock(&Mutex);
+		bShouldStop = true;
+
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Triggered!"));
+	}
+	
+	bCanRotate = false;
+
+	if (GetWorldTimerManager().IsTimerActive(DropTimer))
+	{
+		GetWorldTimerManager().ClearTimer(DropTimer);
+	}
 }

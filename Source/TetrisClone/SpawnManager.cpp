@@ -3,6 +3,8 @@
 
 #include "SpawnManager.h"
 
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values
 ASpawnManager::ASpawnManager()
 {
@@ -16,7 +18,19 @@ void ASpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OnSpawnTimeout();
+	PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (PlayerController)
+	{
+		auto Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
+
+		if (Subsystem)
+		{
+			Subsystem->AddMappingContext(InputMappingContext, 0);
+		}
+	}
+	
+	TriggerSpawn();
 }
 
 // Called every frame
@@ -27,12 +41,21 @@ void ASpawnManager::Tick(float DeltaTime)
 	FVector Down = { 0.0f, 0.0f, -1.0f };
 	if (CurrentPiece && !CurrentPiece->CanMoveToward(Down))
 	{
-		// Stop();
-		SpawnNewPiece();
+		StartSpawnTimer();
 	}
 }
 
-void ASpawnManager::OnSpawnTimeout()
+void ASpawnManager::StartSpawnTimer()
+{
+	if (CurrentPiece && !CurrentPiece->bCanSpawn) return;
+
+	PlayerController->UnPossess();
+	
+	CurrentPiece->bCanSpawn = false;
+	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawnManager::TriggerSpawn, 1.0f, false, 1.0f);
+}
+
+void ASpawnManager::TriggerSpawn()
 {
 	if (BlockTypes.IsEmpty()) return;
 
@@ -40,13 +63,5 @@ void ASpawnManager::OnSpawnTimeout()
 	auto SpawnMe = BlockTypes[Index];
 	
 	CurrentPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, SpawnLocation, FRotator::ZeroRotator);
+	PlayerController->Possess(CurrentPiece);
 }
-
-void ASpawnManager::SpawnNewPiece()
-{
-	if (CurrentPiece && !CurrentPiece->bCanSpawn) return;
-	
-	CurrentPiece->bCanSpawn = false;
-	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawnManager::OnSpawnTimeout, 1.0f, false, 1.0f);
-}
-
