@@ -98,6 +98,8 @@ void APiece::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void APiece::MoveHorizontally(const FInputActionValue& Value)
 {
+	if (bShouldStop) return;
+	
 	float ActionValue = Value.Get<float>();
 	float Sign = FMath::Sign(ActionValue);
 
@@ -143,13 +145,16 @@ void APiece::Rotate()
 		FHitResult OutHit1;
 		FHitResult OutHit2;
 
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(this);
+
 		auto Color1 = FColor::Blue;
 		auto Color2 = FColor::Orange;
 		DrawDebugLine(GetWorld(), Start, Mid, Color1, false, 1, 0, 5);
-		GetWorld()->LineTraceSingleByChannel(OutHit1, Start, Mid, ECC_WorldStatic);
+		GetWorld()->LineTraceSingleByChannel(OutHit1, Start, Mid, ECC_Visibility, QueryParams);
 
 		DrawDebugLine(GetWorld(), Mid, End, Color2, false, 1, 0, 5);
-		GetWorld()->LineTraceSingleByChannel(OutHit2, Mid, End, ECC_WorldStatic);
+		GetWorld()->LineTraceSingleByChannel(OutHit2, Mid, End, ECC_Visibility, QueryParams);
 
 		if (OutHit1.bBlockingHit || OutHit2.bBlockingHit) return;
 	}
