@@ -65,3 +65,8 @@ void ASpawnManager::TriggerSpawn()
 	CurrentPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, SpawnLocation, FRotator::ZeroRotator);
 	PlayerController->Possess(CurrentPiece);
 }
+
+void ASpawnManager::CheckRows()
+{
+	
+}
