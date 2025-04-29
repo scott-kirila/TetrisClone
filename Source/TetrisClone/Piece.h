@@ -16,7 +16,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 
-#include "EnhancedInputSubsystems.h"
 #include "InputAction.h"
 #include "Components/StaticMeshComponent.h"
 
@@ -97,6 +96,6 @@ public:
 	void Rotate();
 	void OnDropTimeout();
 
-	bool CanMoveToward(FVector Direction);
+	bool CanMoveToward(const FVector& Direction) const;
 	bool CanRotate();
 };

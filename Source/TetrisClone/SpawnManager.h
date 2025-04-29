@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
+#include "InputMappingContext.h"
+
 #include "Piece.h"
 
 #include "SpawnManager.generated.h"

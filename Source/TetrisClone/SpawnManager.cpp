@@ -3,8 +3,7 @@
 
 #include "SpawnManager.h"
 
-#include "Async/Async.h"
-#include "Engine/StaticMeshSocket.h"
+#include "EnhancedInputSubsystems.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -116,13 +115,11 @@ void ASpawnManager::CheckRows()
 		FVector End = FVector(600.0f, -300.0f, Height);
 
 		TArray<FHitResult> HitResults;
-		bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_Camera);
+		GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_Camera);
 		auto NumHits = FHitResult::GetNumOverlapHits(HitResults);
 		
 		if (NumHits == 10)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::Printf(TEXT("FULL ROW at Height = %f"), Height));
-
 			NumRowsToDelete++;
 			
 			for (auto& Hit : HitResults)

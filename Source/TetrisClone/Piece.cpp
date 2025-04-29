@@ -153,7 +153,7 @@ void APiece::OnDropTimeout()
 	SetActorLocation(NewLocation);
 }
 
-bool APiece::CanMoveToward(FVector Direction)
+bool APiece::CanMoveToward(const FVector& Direction) const
 {
 	bool Result = true;
 
