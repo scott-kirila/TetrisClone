@@ -40,19 +40,33 @@ void ASpawnManager::Tick(float DeltaTime)
 
 	if (!CurrentPiece) return;
 
+	CheckSpawnConditions();
+}
+
+void ASpawnManager::CheckSpawnConditions()
+{
 	FVector Down = { 0.0f, 0.0f, -1.0f };
 	if ( !CurrentPiece->CanMoveToward(Down) )
 	{
 		CurrentPiece->bBlockedFromBelow = true;
 		
-		if ( !GetWorldTimerManager().IsTimerActive(WaitTimer) )
+		if ( !GetWorldTimerManager().IsTimerActive(SlideAvailableTimer) )
 		{
-			GetWorldTimerManager().SetTimer(WaitTimer, this, &ASpawnManager::OnWaitTimeout, 1.0f, false, 0.5f);
+			GetWorldTimerManager().SetTimer(SlideAvailableTimer, this, &ASpawnManager::OnSlideAvailableTimeout, 1.0f, false, 0.5f);
 		}
 	} else
 	{
 		CurrentPiece->bBlockedFromBelow = false;
 		CurrentPiece->bOneMoveAvailable = true;
+	}
+}
+
+void ASpawnManager::OnSlideAvailableTimeout()
+{
+	FVector Down = { 0.0f, 0.0f, -1.0f };
+	if ( !CurrentPiece->CanMoveToward(Down) && CurrentPiece->bBlockedFromBelow)
+	{
+		StartSpawnTimer();
 	}
 }
 
@@ -75,15 +89,6 @@ void ASpawnManager::TriggerSpawn()
 	
 	CurrentPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, SpawnLocation, FRotator::ZeroRotator);
 	PlayerController->Possess(CurrentPiece);
-}
-
-void ASpawnManager::OnWaitTimeout()
-{
-	FVector Down = { 0.0f, 0.0f, -1.0f };
-	if ( !CurrentPiece->CanMoveToward(Down) && CurrentPiece->bBlockedFromBelow)
-	{
-		StartSpawnTimer();
-	}
 }
 
 void ASpawnManager::CheckRows()

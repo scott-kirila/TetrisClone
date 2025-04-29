@@ -52,6 +52,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* Block3;
+
+	TStaticArray<UStaticMeshComponent*, 4> Blocks;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputAction* MoveHorizontallyAction;
@@ -76,21 +78,10 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanSpawn = true;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bShouldStop = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bCanSlide = true;
-
-	TStaticArray<UStaticMeshComponent*, 4> Blocks;
 	
 	FTimerHandle DropTimer;
 
 	FBlockedFromBelow BlockedFromBelow;
-	
-	mutable FCriticalSection Mutex;
-	mutable FCriticalSection Mutex2;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -108,7 +99,4 @@ public:
 
 	bool CanMoveToward(FVector Direction);
 	bool CanRotate();
-	
-	UFUNCTION()
-	void Stop();
 };

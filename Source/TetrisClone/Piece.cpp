@@ -47,7 +47,6 @@ void APiece::BeginPlay()
 	Super::BeginPlay();
 
 	GetWorldTimerManager().SetTimer(DropTimer, this, &APiece::OnDropTimeout, 1.0f, true, 1.0f);
-	BlockedFromBelow.AddDynamic(this, &APiece::Stop);
 }
 
 // Called every frame
@@ -215,22 +214,4 @@ bool APiece::CanRotate()
 	}
 
 	return true;
-}
-
-void APiece::Stop()
-{
-	// if (!bShouldStop)
-	// {
-	// 	FScopeLock Lock(&Mutex);
-	// 	bShouldStop = true;
-	//
-	// 	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Triggered!"));
-	// }
-	//
-	// bRotatable = false;
-	//
-	// if (GetWorldTimerManager().IsTimerActive(DropTimer))
-	// {
-	// 	GetWorldTimerManager().ClearTimer(DropTimer);
-	// }
 }

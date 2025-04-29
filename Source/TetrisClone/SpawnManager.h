@@ -40,15 +40,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector SpawnLocation = { 0.0f, -300.0f, 1950.0f };
 
-	FTimerHandle WaitTimer;
+	FTimerHandle SlideAvailableTimer;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void CheckSpawnConditions();
+	
+	void OnSlideAvailableTimeout();
 	void StartSpawnTimer();
 	void TriggerSpawn();
-
-	void OnWaitTimeout();
-
+	
 	void CheckRows();
 };
