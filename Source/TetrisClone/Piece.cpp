@@ -18,24 +18,28 @@ APiece::APiece()
 	Block0 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootBlock"));
 	Block0->SetupAttachment(RootComponent);
 	Block0->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	Block0->SetCollisionResponseToChannel(ECC_Camera, ECR_Overlap);
 	Block0->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	// Block 1
 	Block1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Block1"));
 	Block1->SetupAttachment(RootComponent);
 	Block1->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	Block1->SetCollisionResponseToChannel(ECC_Camera, ECR_Overlap);
 	Block1->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	
 	// Block 2
 	Block2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Block2"));
 	Block2->SetupAttachment(RootComponent);
 	Block2->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	Block2->SetCollisionResponseToChannel(ECC_Camera, ECR_Overlap);
 	Block2->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	// Block 3
 	Block3 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Block3"));
 	Block3->SetupAttachment(RootComponent);
 	Block3->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	Block3->SetCollisionResponseToChannel(ECC_Camera, ECR_Overlap);
 	Block3->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	Blocks = { Block0, Block1, Block2, Block3 };
@@ -167,6 +171,7 @@ bool APiece::CanMoveToward(FVector Direction)
 
 		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);
 		auto Color = bDidHit ? FColor::Red : FColor::Green;
+		
 		DrawDebugLine(GetWorld(), Start, End, Color, false, 1, 0, 5);
 
 		Result &= !bDidHit;

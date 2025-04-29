@@ -3,6 +3,7 @@
 
 #include "SpawnManager.h"
 
+#include "Engine/StaticMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -78,6 +79,16 @@ void ASpawnManager::StartSpawnTimer()
 	
 	CurrentPiece->bCanSpawn = false;
 	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawnManager::TriggerSpawn, 1.0f, false, 1.0f);
+
+	// TArray<UStaticMeshComponent*> StaticMeshComponents;
+	// CurrentPiece->GetComponents<UStaticMeshComponent>(StaticMeshComponents);
+	//
+	// for (auto& StaticMeshComponent : StaticMeshComponents)
+	// {
+	// 	StaticMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
+	// }
+	
+	CheckRows();
 }
 
 void ASpawnManager::TriggerSpawn()
@@ -93,5 +104,20 @@ void ASpawnManager::TriggerSpawn()
 
 void ASpawnManager::CheckRows()
 {
-	
+	for (float Height = 50.0f; Height < 1000.0f; Height += 100.0f)
+	{
+		FVector Start = FVector(-500.0f, -300.0f, Height);
+		FVector End = FVector(600.0f, -300.0f, Height);
+
+		TArray<FHitResult> HitResults;
+		bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_Camera);
+		auto NumHits = FHitResult::GetNumOverlapHits(HitResults);
+
+		// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::Printf(TEXT("%d"), NumHits));
+		
+		if (NumHits == 10)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::Printf(TEXT("FULL ROW at Height = %f"), Height));
+		}
+	}
 }
