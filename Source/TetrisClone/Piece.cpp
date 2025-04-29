@@ -69,7 +69,7 @@ void APiece::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Triggered, this, &APiece::DownwardBurst);
 		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Started, this, &APiece::OnDownwardBurstStarted);
 		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Canceled, this, &APiece::OnDownwardBurstCanceled);
-		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Canceled, this, &APiece::OnDownwardBurstCompleted);
+		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Completed, this, &APiece::OnDownwardBurstCompleted);
 
 		if (bRotatable)
 		{
@@ -80,6 +80,8 @@ void APiece::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void APiece::MoveHorizontally(const FInputActionValue& Value)
 {
+	if ( bBlockedFromBelow && !bOneMoveAvailable ) return;
+	
 	float ActionValue = Value.Get<float>();
 
 	// Perform direction check before allowing movement
@@ -88,6 +90,11 @@ void APiece::MoveHorizontally(const FInputActionValue& Value)
 	
 	auto CurrentLocation = GetActorLocation();
 	SetActorLocation({CurrentLocation.X + ActionValue * 100.0f, CurrentLocation.Y, CurrentLocation.Z});
+
+	if (bBlockedFromBelow)
+	{
+		bOneMoveAvailable = false;
+	}
 }
 
 void APiece::DownwardBurst()
@@ -128,18 +135,17 @@ void APiece::Rotate()
 
 void APiece::OnDropTimeout()
 {
+	if (bDownwardBurstActive) return;
+	
 	// Perform direction check before allowing movement
 	FVector Direction = { 0.0f, 0.0f, -1.0f };
-	if (!CanMoveToward(Direction)) return;
+	if (!CanMoveToward(Direction))
+	{
+		return;
+	}
 
 	auto CurrentLocation = GetActorLocation();
 
-	GEngine->AddOnScreenDebugMessage(-1, 0.7f, FColor::Green, FString::Printf(TEXT("%d"), bDownwardBurstActive));
-	
-	if (bDownwardBurstActive) return;
-
-	GEngine->AddOnScreenDebugMessage(-1, 0.7f, FColor::White, FString::Printf(TEXT("Auto Drop")));
-	
 	FVector NewLocation = { CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f };
 	SetActorLocation(NewLocation);
 }
@@ -167,11 +173,6 @@ bool APiece::CanMoveToward(FVector Direction)
 		Result &= !bDidHit;
 	}
 	
-	if (!Result && (Direction.Z < 0.0f))
-	{
-		BlockedFromBelow.Broadcast();
-	}
-
 	return Result;
 }
 
@@ -218,18 +219,18 @@ bool APiece::CanRotate()
 
 void APiece::Stop()
 {
-	if (!bShouldStop)
-	{
-		FScopeLock Lock(&Mutex);
-		bShouldStop = true;
-
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Triggered!"));
-	}
-	
-	bRotatable = false;
-
-	if (GetWorldTimerManager().IsTimerActive(DropTimer))
-	{
-		GetWorldTimerManager().ClearTimer(DropTimer);
-	}
+	// if (!bShouldStop)
+	// {
+	// 	FScopeLock Lock(&Mutex);
+	// 	bShouldStop = true;
+	//
+	// 	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Triggered!"));
+	// }
+	//
+	// bRotatable = false;
+	//
+	// if (GetWorldTimerManager().IsTimerActive(DropTimer))
+	// {
+	// 	GetWorldTimerManager().ClearTimer(DropTimer);
+	// }
 }

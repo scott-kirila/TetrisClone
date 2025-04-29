@@ -67,6 +67,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bDownwardBurstActive = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bBlockedFromBelow = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bOneMoveAvailable = true;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanSpawn = true;
