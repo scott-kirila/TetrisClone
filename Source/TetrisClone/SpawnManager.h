@@ -40,6 +40,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector SpawnLocation = { 0.0f, -300.0f, 1950.0f };
 
+	int32 NumRowsToDelete = 0;
+
+	TArray<TWeakObjectPtr<UPrimitiveComponent>> ComponentsToDestroy;
+	TMap<TWeakObjectPtr<UPrimitiveComponent>, int32> ComponentsToMove;
+	
 	FTimerHandle SlideAvailableTimer;
 	
 	// Called every frame
@@ -52,4 +57,5 @@ public:
 	void TriggerSpawn();
 	
 	void CheckRows();
+	void PostClearMoveCheck();
 };

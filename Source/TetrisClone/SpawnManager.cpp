@@ -76,19 +76,31 @@ void ASpawnManager::StartSpawnTimer()
 	if (CurrentPiece && !CurrentPiece->bCanSpawn) return;
 
 	PlayerController->UnPossess();
-	
 	CurrentPiece->bCanSpawn = false;
-	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawnManager::TriggerSpawn, 1.0f, false, 1.0f);
+	GetWorldTimerManager().ClearTimer(CurrentPiece->DropTimer);
 
-	// TArray<UStaticMeshComponent*> StaticMeshComponents;
-	// CurrentPiece->GetComponents<UStaticMeshComponent>(StaticMeshComponents);
-	//
-	// for (auto& StaticMeshComponent : StaticMeshComponents)
-	// {
-	// 	StaticMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
-	// }
 	
 	CheckRows();
+	if (!ComponentsToDestroy.IsEmpty())
+	{
+		for (auto& Component : ComponentsToDestroy)
+		{
+			Component->DestroyComponent();
+		}
+	}
+
+	if (!ComponentsToMove.IsEmpty())
+	{
+		for (auto& Pair : ComponentsToMove)
+		{
+			auto CurrentLocation = Pair.Key->GetComponentLocation();
+			auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f * Pair.Value);
+			Pair.Key->SetWorldLocation(NewLocation);
+		}
+	}
+
+	
+	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawnManager::TriggerSpawn, 1.0f, false, 1.0f);
 }
 
 void ASpawnManager::TriggerSpawn()
@@ -104,6 +116,41 @@ void ASpawnManager::TriggerSpawn()
 
 void ASpawnManager::CheckRows()
 {
+	NumRowsToDelete = 0;
+	ComponentsToDestroy.Empty();
+	ComponentsToMove.Empty();
+	
+	for (float Height = 50.0f; Height < 1000.0f; Height += 100.0f)
+	{
+		FVector Start = FVector(-500.0f, -300.0f, Height);
+		FVector End = FVector(600.0f, -300.0f, Height);
+
+		TArray<FHitResult> HitResults;
+		bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_Camera);
+		auto NumHits = FHitResult::GetNumOverlapHits(HitResults);
+		
+		if (NumHits == 10)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::Printf(TEXT("FULL ROW at Height = %f"), Height));
+
+			NumRowsToDelete++;
+			
+			for (auto& Hit : HitResults)
+			{
+				ComponentsToDestroy.Add(Hit.Component);
+			}
+		} else
+		{
+			for (auto& Hit : HitResults)
+			{
+				ComponentsToMove.Add(Hit.Component, NumRowsToDelete);
+			}
+		}
+	}
+}
+
+void ASpawnManager::PostClearMoveCheck()
+{
 	for (float Height = 50.0f; Height < 1000.0f; Height += 100.0f)
 	{
 		FVector Start = FVector(-500.0f, -300.0f, Height);
@@ -113,11 +160,6 @@ void ASpawnManager::CheckRows()
 		bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_Camera);
 		auto NumHits = FHitResult::GetNumOverlapHits(HitResults);
 
-		// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::Printf(TEXT("%d"), NumHits));
 		
-		if (NumHits == 10)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::Printf(TEXT("FULL ROW at Height = %f"), Height));
-		}
 	}
 }
