@@ -39,7 +39,7 @@ void ASpawnManager::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	FVector Down = { 0.0f, 0.0f, -1.0f };
-	if (CurrentPiece && !CurrentPiece->CanMoveToward(Down))
+	if ( CurrentPiece && !CurrentPiece->CanMoveToward(Down) )
 	{
 		StartSpawnTimer();
 	}

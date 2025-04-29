@@ -1,5 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/*
+ * Stopping condition: a downward trace from at least one block hits something.
+ *
+ * However, we want to allow a short window in which the player can move the
+ * piece AT MOST one space. 
+ *
+ * We could try handling this in the Drop Timer, perhaps checking
+ * if there is a downward hit AND if a slide is still available. If not,
+ * we unpossess the piece and spawn a new one.
+*/
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -47,12 +58,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputAction* DownwardBurstAction;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputAction* RotateAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bCanRotate = true;
+	bool bRotatable = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bDownwardBurstActive = false;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanSpawn = true;
@@ -60,12 +74,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bShouldStop = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bCanSlide = true;
+
 	TStaticArray<UStaticMeshComponent*, 4> Blocks;
 	
 	FTimerHandle DropTimer;
 
 	FBlockedFromBelow BlockedFromBelow;
+	
 	mutable FCriticalSection Mutex;
+	mutable FCriticalSection Mutex2;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -75,10 +94,14 @@ public:
 
 	void MoveHorizontally(const FInputActionValue& Value);
 	void DownwardBurst();
+	void OnDownwardBurstStarted();
+	void OnDownwardBurstCanceled();
+	void OnDownwardBurstCompleted();
 	void Rotate();
 	void OnDropTimeout();
 
 	bool CanMoveToward(FVector Direction);
+	bool CanRotate();
 	
 	UFUNCTION()
 	void Stop();

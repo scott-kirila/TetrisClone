@@ -45,7 +45,7 @@ APiece::APiece()
 void APiece::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	GetWorldTimerManager().SetTimer(DropTimer, this, &APiece::OnDropTimeout, 1.0f, true, 1.0f);
 	BlockedFromBelow.AddDynamic(this, &APiece::Stop);
 }
@@ -67,8 +67,11 @@ void APiece::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	{
 		EnhancedInputComponent->BindAction(MoveHorizontallyAction, ETriggerEvent::Triggered, this, &APiece::MoveHorizontally);
 		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Triggered, this, &APiece::DownwardBurst);
-		
-		if (bCanRotate)
+		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Started, this, &APiece::OnDownwardBurstStarted);
+		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Canceled, this, &APiece::OnDownwardBurstCanceled);
+		EnhancedInputComponent->BindAction(DownwardBurstAction, ETriggerEvent::Canceled, this, &APiece::OnDownwardBurstCompleted);
+
+		if (bRotatable)
 		{
 			EnhancedInputComponent->BindAction(RotateAction, ETriggerEvent::Started, this, &APiece::Rotate);
 		}
@@ -77,31 +80,103 @@ void APiece::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void APiece::MoveHorizontally(const FInputActionValue& Value)
 {
-	if (bShouldStop) return;
-	
 	float ActionValue = Value.Get<float>();
-	float Sign = FMath::Sign(ActionValue);
 
+	// Perform direction check before allowing movement
 	FVector DirectionVector = { ActionValue, 0.0f, 0.0f };
 	if (!CanMoveToward(DirectionVector)) return;
 	
 	auto CurrentLocation = GetActorLocation();
-	SetActorLocation({CurrentLocation.X + Sign * 100.0f, CurrentLocation.Y, CurrentLocation.Z});
+	SetActorLocation({CurrentLocation.X + ActionValue * 100.0f, CurrentLocation.Y, CurrentLocation.Z});
 }
 
 void APiece::DownwardBurst()
 {
+	// Perform direction check before allowing movement
 	FVector Direction = { 0.0f, 0.0f, -1.0f };
 	if (!CanMoveToward(Direction)) return;
-	
+
 	auto CurrentLocation = GetActorLocation();
 	SetActorLocation({CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f});
 }
 
+void APiece::OnDownwardBurstStarted()
+{
+	bDownwardBurstActive = true;
+}
+
+void APiece::OnDownwardBurstCanceled()
+{
+	bDownwardBurstActive = false;
+}
+
+void APiece::OnDownwardBurstCompleted()
+{
+	bDownwardBurstActive = false;
+}
+
 void APiece::Rotate()
 {
-	if (!bCanRotate) return;
+	if (!bRotatable) return;
 	
+	if (CanRotate())
+	{
+		auto Rotation = FRotator(-90.0f, 0.0f, 0.0f);
+		AddActorLocalRotation(Rotation);	
+	}
+}
+
+void APiece::OnDropTimeout()
+{
+	// Perform direction check before allowing movement
+	FVector Direction = { 0.0f, 0.0f, -1.0f };
+	if (!CanMoveToward(Direction)) return;
+
+	auto CurrentLocation = GetActorLocation();
+
+	GEngine->AddOnScreenDebugMessage(-1, 0.7f, FColor::Green, FString::Printf(TEXT("%d"), bDownwardBurstActive));
+	
+	if (bDownwardBurstActive) return;
+
+	GEngine->AddOnScreenDebugMessage(-1, 0.7f, FColor::White, FString::Printf(TEXT("Auto Drop")));
+	
+	FVector NewLocation = { CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f };
+	SetActorLocation(NewLocation);
+}
+
+bool APiece::CanMoveToward(FVector Direction)
+{
+	bool Result = true;
+
+	TArray<UStaticMeshComponent*> Meshes;
+	GetComponents<UStaticMeshComponent>(Meshes);
+	
+	for (const auto& Mesh : Meshes)
+	{
+		FHitResult HitResult;
+		FVector Start = Mesh->GetComponentLocation();
+		FVector End = Start + Direction * 100.0f;
+
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(this);
+
+		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);
+		auto Color = bDidHit ? FColor::Red : FColor::Green;
+		DrawDebugLine(GetWorld(), Start, End, Color, false, 1, 0, 5);
+
+		Result &= !bDidHit;
+	}
+	
+	if (!Result && (Direction.Z < 0.0f))
+	{
+		BlockedFromBelow.Broadcast();
+	}
+
+	return Result;
+}
+
+bool APiece::CanRotate()
+{
 	auto RootLocation = GetActorLocation();
 	
 	for (const auto Block : Blocks)
@@ -135,53 +210,10 @@ void APiece::Rotate()
 		DrawDebugLine(GetWorld(), Mid, End, Color2, false, 1, 0, 5);
 		GetWorld()->LineTraceSingleByChannel(OutHit2, Mid, End, ECC_Visibility, QueryParams);
 
-		if (OutHit1.bBlockingHit || OutHit2.bBlockingHit) return;
-	}
-	
-	auto Rotation = FRotator(-90.0f, 0.0f, 0.0f);
-	AddActorLocalRotation(Rotation);
-}
-
-void APiece::OnDropTimeout()
-{
-	FVector Direction = { 0.0f, 0.0f, -1.0f};
-	if (!CanMoveToward(Direction)) return;
-	
-	auto CurrentLocation = GetActorLocation();
-	
-	auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f);
-	SetActorLocation(NewLocation);
-}
-
-bool APiece::CanMoveToward(FVector Direction)
-{
-	bool Result = true;
-
-	TArray<UStaticMeshComponent*> Meshes;
-	GetComponents<UStaticMeshComponent>(Meshes);
-	
-	for (const auto& Mesh : Meshes)
-	{
-		FHitResult HitResult;
-		FVector Start = Mesh->GetComponentLocation();
-		FVector End = Start + Direction * 100.0f;
-
-		FCollisionQueryParams QueryParams;
-		QueryParams.AddIgnoredActor(this);
-
-		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);
-		auto Color = bDidHit ? FColor::Red : FColor::Green;
-		DrawDebugLine(GetWorld(), Start, End, Color, false, 1, 0, 5);
-
-		Result &= !bDidHit;
+		if (OutHit1.bBlockingHit || OutHit2.bBlockingHit) return false;
 	}
 
-	if (!Result && (Direction.Z < 0.0f))
-	{
-		BlockedFromBelow.Broadcast();
-	}
-
-	return Result;
+	return true;
 }
 
 void APiece::Stop()
@@ -194,7 +226,7 @@ void APiece::Stop()
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Triggered!"));
 	}
 	
-	bCanRotate = false;
+	bRotatable = false;
 
 	if (GetWorldTimerManager().IsTimerActive(DropTimer))
 	{
