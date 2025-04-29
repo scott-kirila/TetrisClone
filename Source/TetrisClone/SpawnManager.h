@@ -46,6 +46,7 @@ public:
 	TMap<TWeakObjectPtr<UPrimitiveComponent>, int32> ComponentsToMove;
 	
 	FTimerHandle SlideAvailableTimer;
+	FTimerHandle PostClearMoveTimer;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

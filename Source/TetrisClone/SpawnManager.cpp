@@ -3,6 +3,7 @@
 
 #include "SpawnManager.h"
 
+#include "Async/Async.h"
 #include "Engine/StaticMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -89,18 +90,7 @@ void ASpawnManager::StartSpawnTimer()
 		}
 	}
 
-	if (!ComponentsToMove.IsEmpty())
-	{
-		for (auto& Pair : ComponentsToMove)
-		{
-			auto CurrentLocation = Pair.Key->GetComponentLocation();
-			auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f * Pair.Value);
-			Pair.Key->SetWorldLocation(NewLocation);
-		}
-	}
-
-	
-	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawnManager::TriggerSpawn, 1.0f, false, 1.0f);
+	GetWorldTimerManager().SetTimer(PostClearMoveTimer, this, &ASpawnManager::PostClearMoveCheck, 1.0f, false, 0.2f);
 }
 
 void ASpawnManager::TriggerSpawn()
@@ -120,7 +110,7 @@ void ASpawnManager::CheckRows()
 	ComponentsToDestroy.Empty();
 	ComponentsToMove.Empty();
 	
-	for (float Height = 50.0f; Height < 1000.0f; Height += 100.0f)
+	for (float Height = 50.0f; Height < 2000.0f; Height += 100.0f)
 	{
 		FVector Start = FVector(-500.0f, -300.0f, Height);
 		FVector End = FVector(600.0f, -300.0f, Height);
@@ -151,15 +141,16 @@ void ASpawnManager::CheckRows()
 
 void ASpawnManager::PostClearMoveCheck()
 {
-	for (float Height = 50.0f; Height < 1000.0f; Height += 100.0f)
+	if (!ComponentsToMove.IsEmpty())
 	{
-		FVector Start = FVector(-500.0f, -300.0f, Height);
-		FVector End = FVector(600.0f, -300.0f, Height);
-
-		TArray<FHitResult> HitResults;
-		bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults, Start, End, ECC_Camera);
-		auto NumHits = FHitResult::GetNumOverlapHits(HitResults);
-
-		
+		for (auto& Pair : ComponentsToMove)
+		{
+			auto CurrentLocation = Pair.Key->GetComponentLocation();
+			auto NewLocation = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - 100.0f * Pair.Value);
+			Pair.Key->SetWorldLocation(NewLocation);
+		}
 	}
+
+	
+	GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawnManager::TriggerSpawn, 1.0f, false, 1.0f);
 }
