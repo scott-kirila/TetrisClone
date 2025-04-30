@@ -30,6 +30,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	int32 Score = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	int32 Level = 0;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	APiece* CurrentPiece;
 	

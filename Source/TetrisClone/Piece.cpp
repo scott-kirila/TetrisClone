@@ -50,7 +50,7 @@ void APiece::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetWorldTimerManager().SetTimer(DropTimer, this, &APiece::OnDropTimeout, 1.0f, true, 1.0f);
+	// GetWorldTimerManager().SetTimer(DropTimer, this, &APiece::OnDropTimeout, 1.0f, true, 1.0f);
 }
 
 // Called every frame

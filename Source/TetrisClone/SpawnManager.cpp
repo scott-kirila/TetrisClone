@@ -89,7 +89,7 @@ void ASpawnManager::StartSpawnTimer()
 		}
 	}
 
-	GetWorldTimerManager().SetTimer(PostClearMoveTimer, this, &ASpawnManager::PostClearMoveCheck, 1.0f, false, 0.2f);
+	GetWorldTimerManager().SetTimer(PostClearMoveTimer, this, &ASpawnManager::PostClearMoveCheck, 1.0f, false, 0.3f);
 }
 
 void ASpawnManager::TriggerSpawn()
@@ -100,6 +100,9 @@ void ASpawnManager::TriggerSpawn()
 	auto SpawnMe = BlockTypes[Index];
 	
 	CurrentPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, SpawnLocation, FRotator::ZeroRotator);
+	float DropDelay = FMath::Pow(0.85f, Level);
+	GetWorldTimerManager().SetTimer(CurrentPiece->DropTimer, CurrentPiece, &APiece::OnDropTimeout, DropDelay, true, DropDelay);
+	
 	PlayerController->Possess(CurrentPiece);
 }
 
@@ -134,6 +137,9 @@ void ASpawnManager::CheckRows()
 			}
 		}
 	}
+
+	Score += NumRowsToDelete;
+	Level = Score / 10;
 }
 
 void ASpawnManager::PostClearMoveCheck()
