@@ -11,7 +11,6 @@ ASpawnManager::ASpawnManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -100,10 +99,45 @@ void ASpawnManager::TriggerSpawn()
 	auto SpawnMe = BlockTypes[Index];
 	
 	CurrentPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, SpawnLocation, FRotator::ZeroRotator);
+	SpawnBlockCheck();
+	
 	float DropDelay = FMath::Pow(0.85f, Level);
 	GetWorldTimerManager().SetTimer(CurrentPiece->DropTimer, CurrentPiece, &APiece::OnDropTimeout, DropDelay, true, DropDelay);
 	
 	PlayerController->Possess(CurrentPiece);
+}
+
+void ASpawnManager::SpawnBlockCheck()
+{
+	// Check for blocking piece
+	bool Result = true;
+
+	TArray<UStaticMeshComponent*> Meshes;
+	CurrentPiece->GetComponents<UStaticMeshComponent>(Meshes);
+	
+	for (const auto& Mesh : Meshes)
+	{
+		FHitResult HitResult;
+		FVector Start = Mesh->GetComponentLocation() + FVector::UpVector * 100.0f;
+		FVector End = Start - FVector::UpVector * 100.0f;
+
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(CurrentPiece);
+
+		auto bDidHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);
+		auto Color = bDidHit ? FColor::Red : FColor::Green;
+		
+		DrawDebugLine(GetWorld(), Start, End, Color, false, 1, 0, 5);
+
+		Result &= !bDidHit;
+	}
+	
+	if (!Result)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Ding!"));
+		// UGameplayStatics::OpenLevel(GetWorld(), FName("Main"));
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
+	}
 }
 
 void ASpawnManager::CheckRows()

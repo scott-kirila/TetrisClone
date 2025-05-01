@@ -64,6 +64,8 @@ public:
 	void OnSlideAvailableTimeout();
 	void StartSpawnTimer();
 	void TriggerSpawn();
+
+	void SpawnBlockCheck();
 	
 	void CheckRows();
 	void PostClearMoveCheck();
