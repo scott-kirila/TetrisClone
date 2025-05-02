@@ -55,6 +55,8 @@ public:
 	
 	FTimerHandle SlideAvailableTimer;
 	FTimerHandle PostClearMoveTimer;
+
+	
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -69,4 +71,7 @@ public:
 	
 	void CheckRows();
 	void PostClearMoveCheck();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void DisplayGameOverScreen();
 };

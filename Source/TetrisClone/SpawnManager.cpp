@@ -135,8 +135,8 @@ void ASpawnManager::SpawnBlockCheck()
 	if (!Result)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Ding!"));
-		// UGameplayStatics::OpenLevel(GetWorld(), FName("Main"));
 		UGameplayStatics::SetGamePaused(GetWorld(), true);
+		DisplayGameOverScreen();
 	}
 }
 
