@@ -29,6 +29,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	int32 Score = 0;
@@ -56,7 +58,11 @@ public:
 	FTimerHandle SlideAvailableTimer;
 	FTimerHandle PostClearMoveTimer;
 
-	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UWidgetBackend> UIWidgetClass;
+
+	UPROPERTY()
+	class UWidgetBackend* UIWidget;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

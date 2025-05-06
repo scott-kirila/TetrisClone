@@ -5,6 +5,9 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
+
+#include "WidgetBackend.h"
 
 // Sets default values
 ASpawnManager::ASpawnManager()
@@ -29,8 +32,25 @@ void ASpawnManager::BeginPlay()
 			Subsystem->AddMappingContext(InputMappingContext, 0);
 		}
 	}
+
+	if (UIWidgetClass)
+	{
+		UIWidget = CreateWidget<UWidgetBackend>(PlayerController, UIWidgetClass);
+		UIWidget->AddToPlayerScreen();
+	}
 	
 	TriggerSpawn();
+}
+
+void ASpawnManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UIWidget)
+	{
+		UIWidget->RemoveFromParent();
+		UIWidget = nullptr;
+	}
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -136,6 +156,8 @@ void ASpawnManager::SpawnBlockCheck()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT("Ding!"));
 		UGameplayStatics::SetGamePaused(GetWorld(), true);
+		UIWidget->RemoveFromParent();
+		UIWidget = nullptr;
 		DisplayGameOverScreen();
 	}
 }
@@ -173,7 +195,17 @@ void ASpawnManager::CheckRows()
 	}
 
 	Score += NumRowsToDelete;
-	Level = Score / 10;
+	if (NumRowsToDelete != 0)
+	{
+		UIWidget->UpdateScoreText(Score);
+	}
+	
+	auto TempLevel = Score / 10;
+	if (TempLevel != Level)
+	{
+		Level = TempLevel;
+		UIWidget->UpdateLevelText(Level);
+	}
 }
 
 void ASpawnManager::PostClearMoveCheck()
