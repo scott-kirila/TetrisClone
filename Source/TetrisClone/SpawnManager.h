@@ -36,10 +36,13 @@ public:
 	int32 Score = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	int32 Level = 0;
+	int32 Level = 1;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	APiece* CurrentPiece;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	APiece* NextPiece;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputMappingContext* InputMappingContext;

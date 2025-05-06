@@ -115,11 +115,26 @@ void ASpawnManager::TriggerSpawn()
 {
 	if (BlockTypes.IsEmpty()) return;
 
+	if (!CurrentPiece)
+	{
+		auto Index = FMath::RandRange(0, BlockTypes.Num() - 1);
+		auto SpawnMe = BlockTypes[Index];
+		CurrentPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, SpawnLocation, FRotator::ZeroRotator);
+	} else
+	{
+		CurrentPiece = NextPiece;
+		CurrentPiece->SetActorLocation(SpawnLocation);
+		SpawnBlockCheck();
+	}
+
+	
 	auto Index = FMath::RandRange(0, BlockTypes.Num() - 1);
 	auto SpawnMe = BlockTypes[Index];
 	
-	CurrentPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, SpawnLocation, FRotator::ZeroRotator);
-	SpawnBlockCheck();
+	auto PreviewLocation = FVector(-200, -25, 3500);
+	NextPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, PreviewLocation, FRotator::ZeroRotator);
+
+
 	
 	float DropDelay = FMath::Pow(0.85f, Level);
 	GetWorldTimerManager().SetTimer(CurrentPiece->DropTimer, CurrentPiece, &APiece::OnDropTimeout, DropDelay, true, DropDelay);
