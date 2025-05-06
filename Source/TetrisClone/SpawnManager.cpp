@@ -216,6 +216,7 @@ void ASpawnManager::CheckRows()
 	}
 	
 	auto TempLevel = Score / 10;
+	TempLevel++;
 	if (TempLevel != Level)
 	{
 		Level = TempLevel;
