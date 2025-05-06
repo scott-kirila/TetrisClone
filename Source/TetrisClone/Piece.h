@@ -38,30 +38,30 @@ protected:
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* Root;
+	TObjectPtr<USceneComponent> Root;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* Block0;
+	TObjectPtr<UStaticMeshComponent> Block0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* Block1;
+	TObjectPtr<UStaticMeshComponent> Block1;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* Block2;
+	TObjectPtr<UStaticMeshComponent> Block2;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* Block3;
+	TObjectPtr<UStaticMeshComponent> Block3;
 
-	TStaticArray<UStaticMeshComponent*, 4> Blocks;
+	TStaticArray<TWeakObjectPtr<UStaticMeshComponent>, 4> Blocks;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UInputAction* MoveHorizontallyAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UInputAction* DownwardBurstAction;
+	TObjectPtr<UInputAction> MoveHorizontallyAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UInputAction* RotateAction;
+	TObjectPtr<UInputAction> DownwardBurstAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UInputAction> RotateAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bRotatable = true;

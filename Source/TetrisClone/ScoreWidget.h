@@ -5,21 +5,21 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
-#include "WidgetBackend.generated.h"
+#include "ScoreWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TETRISCLONE_API UWidgetBackend : public UUserWidget
+class TETRISCLONE_API UScoreWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	UTextBlock* ScoreText;
+	TObjectPtr<UTextBlock> ScoreText;
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
-	UTextBlock* LevelText;
+	TObjectPtr<UTextBlock> LevelText;
 
 public:
 	// UFUNCTION(BlueprintCallable)

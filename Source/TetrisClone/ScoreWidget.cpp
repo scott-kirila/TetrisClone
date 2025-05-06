@@ -1,15 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "WidgetBackend.h"
+#include "ScoreWidget.h"
 
-void UWidgetBackend::UpdateScoreText(int NewScore)
+void UScoreWidget::UpdateScoreText(int NewScore)
 {
 	auto NewText = FText::FromString(FString::Printf(TEXT("%d"), NewScore));
 	ScoreText->SetText(NewText);
 }
 
-void UWidgetBackend::UpdateLevelText(int NewLevel)
+void UScoreWidget::UpdateLevelText(int NewLevel)
 {
 	auto NewText = FText::FromString(FString::Printf(TEXT("%d"), NewLevel));
 	LevelText->SetText(NewText);

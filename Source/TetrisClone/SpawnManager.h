@@ -59,10 +59,10 @@ public:
 	FTimerHandle PostClearMoveTimer;
 
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UWidgetBackend> UIWidgetClass;
+	TSubclassOf<class UScoreWidget> UIWidgetClass;
 
 	UPROPERTY()
-	class UWidgetBackend* UIWidget;
+	TObjectPtr<UScoreWidget> UIWidget;
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

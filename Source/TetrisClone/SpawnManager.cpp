@@ -7,7 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 
-#include "WidgetBackend.h"
+#include "ScoreWidget.h"
 
 // Sets default values
 ASpawnManager::ASpawnManager()
@@ -35,7 +35,7 @@ void ASpawnManager::BeginPlay()
 
 	if (UIWidgetClass)
 	{
-		UIWidget = CreateWidget<UWidgetBackend>(PlayerController, UIWidgetClass);
+		UIWidget = CreateWidget<UScoreWidget>(PlayerController, UIWidgetClass);
 		UIWidget->AddToPlayerScreen();
 	}
 	
