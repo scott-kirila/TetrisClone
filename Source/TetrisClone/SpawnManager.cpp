@@ -131,25 +131,11 @@ void ASpawnManager::TriggerSpawn()
 	auto Index = FMath::RandRange(0, BlockTypes.Num() - 1);
 	auto SpawnMe = BlockTypes[Index];
 	
-	auto PreviewLocation = FVector(-200, -25, 3500);
+	auto PreviewLocation = FVector(-215, -25, 3525);
 	
 	
 	NextPiece = GetWorld()->SpawnActor<APiece>(SpawnMe, PreviewLocation, FRotator::ZeroRotator);
-	TArray<UStaticMeshComponent*> SMCs;
-	NextPiece->GetComponents<UStaticMeshComponent>(SMCs);
-	FVector Offset{};
-	if (NextPiece->bRotatable)
-	{
-		for (auto SMC : SMCs)
-		{
-			Offset += SMC->GetRelativeLocation();
-		}		
-	} else
-	{
-		Offset = { 50, 50, 50 };
-	}
-	NextPiece->AddActorWorldOffset(Offset);
-
+	NextPiece->AddActorWorldOffset(NextPiece->PreviewOffset);
 	
 	float DropDelay = FMath::Pow(0.85f, Level);
 	GetWorldTimerManager().SetTimer(CurrentPiece->DropTimer, CurrentPiece, &APiece::OnDropTimeout, DropDelay, true, DropDelay);

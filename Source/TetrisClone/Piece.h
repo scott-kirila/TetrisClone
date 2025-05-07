@@ -37,6 +37,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector PreviewOffset;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<USceneComponent> Root;
 	
