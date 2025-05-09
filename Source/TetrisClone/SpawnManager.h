@@ -39,16 +39,16 @@ public:
 	int32 Level = 1;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	APiece* CurrentPiece;
+	TObjectPtr<APiece> CurrentPiece;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	APiece* NextPiece;
+	TObjectPtr<APiece> NextPiece;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInputMappingContext* InputMappingContext;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	APlayerController* PlayerController;
+	TObjectPtr<APlayerController> PlayerController;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector SpawnLocation = { 0.0f, -300.0f, 1950.0f };

@@ -140,7 +140,7 @@ void ASpawnManager::TriggerSpawn()
 	NextPiece->AddActorWorldOffset(NextPiece->PreviewOffset);
 	
 	float DropDelay = FMath::Pow(0.85f, Level);
-	GetWorldTimerManager().SetTimer(CurrentPiece->DropTimer, CurrentPiece, &APiece::OnDropTimeout, DropDelay, true, DropDelay);
+	GetWorldTimerManager().SetTimer(CurrentPiece->DropTimer, CurrentPiece.Get(), &APiece::OnDropTimeout, DropDelay, true, DropDelay);
 	
 	PlayerController->Possess(CurrentPiece);
 }
