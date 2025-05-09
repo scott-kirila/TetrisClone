@@ -8,6 +8,7 @@
 #include "Blueprint/UserWidget.h"
 
 #include "ScoreWidget.h"
+#include "LineClearCameraShake.h"
 
 // Sets default values
 ASpawnManager::ASpawnManager()
@@ -21,8 +22,8 @@ void ASpawnManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
+	PlayerController = GetWorld()->GetFirstPlayerController();
+	
 	if (PlayerController)
 	{
 		auto Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
@@ -97,11 +98,12 @@ void ASpawnManager::StartSpawnTimer()
 	PlayerController->UnPossess();
 	CurrentPiece->bCanSpawn = false;
 	GetWorldTimerManager().ClearTimer(CurrentPiece->DropTimer);
-
 	
 	CheckRows();
 	if (!ComponentsToDestroy.IsEmpty())
 	{
+		PlayerController->ClientStartCameraShake(ULineClearCameraShake::StaticClass());
+		
 		for (auto& Component : ComponentsToDestroy)
 		{
 			Component->DestroyComponent();
